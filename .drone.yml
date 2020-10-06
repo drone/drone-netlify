@@ -1,0 +1,101 @@
+kind: pipeline
+type: docker
+name: amd64
+
+platform:
+  arch: amd64
+
+steps:
+- name: build
+  image: golang
+  commands:
+  - go test ./...
+  - sh scripts/build.sh
+
+- name: publish
+  image: plugins/docker
+  settings:
+    repo: plugins/netlify
+    auto_tag: true
+    auto_tag_suffix: linux-amd64
+    dockerfile: docker/Dockerfile
+    username:
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
+
+---
+kind: pipeline
+type: docker
+name: arm32
+
+platform:
+  arch: arm
+
+steps:
+- name: build
+  image: golang
+  commands:
+  - go test ./...
+  - sh scripts/build.sh
+
+- name: publish
+  image: plugins/docker
+  settings:
+    repo: plugins/netlify
+    auto_tag: true
+    auto_tag_suffix: linux-arm
+    dockerfile: docker/Dockerfile.linux.arm
+    username:
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
+
+---
+kind: pipeline
+type: docker
+name: arm64
+
+platform:
+  arch: arm64
+
+steps:
+- name: build
+  image: golang
+  commands:
+  - go test ./...
+  - sh scripts/build.sh
+
+- name: publish
+  image: plugins/docker
+  settings:
+    repo: plugins/netlify
+    auto_tag: true
+    auto_tag_suffix: linux-arm64
+    dockerfile: docker/Dockerfile.linux.arm64
+    username:
+      from_secret: docker_username
+    password:
+      from_secret: docker_password
+
+---
+kind: pipeline
+type: docker
+name: manifest
+
+steps:
+- name: manifest
+  image: plugins/manifest
+  settings:
+    spec: docker/manifest.tmpl
+    auto_tag: true
+    ignore_missing: true
+    password:
+      from_secret: docker_password
+    username:
+      from_secret: docker_username
+
+depends_on:
+- arm32
+- arm64
+- amd64
