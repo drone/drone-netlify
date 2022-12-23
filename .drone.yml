@@ -1,55 +1,80 @@
 kind: pipeline
-type: docker
-name: amd64
+type: vm
+name: testing
 
 platform:
+  os: linux
   arch: amd64
+pool:
+  use: ubuntu
 
 steps:
-- name: build
-  image: golang
-  commands:
-  - go test ./...
-  - sh scripts/build.sh
+  - name: lint
+    image: golang:1.19
+    pull: always
+    commands:
+      - go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+      - golangci-lint version
+      - golangci-lint run
+    volumes:
+      - name: gopath
+        path: "/go"
+  - name: test
+    image: golang:1.19
+    commands:
+      - go test -cover ./...
+    volumes:
+      - name: gopath
+        path: "/go"
 
-- name: publish
-  image: plugins/docker
-  settings:
-    repo: plugins/netlify
-    auto_tag: true
-    auto_tag_suffix: linux-amd64
-    dockerfile: docker/Dockerfile
-    username:
-      from_secret: docker_username
-    password:
-      from_secret: docker_password
+volumes:
+  - name: gopath
+    temp: {}
+
+trigger:
+  ref:
+    - refs/heads/master
+    - refs/tags/**
+    - refs/pull/**
 
 ---
 kind: pipeline
-type: docker
-name: arm32
+type: vm
+name: amd64
 
 platform:
-  arch: arm
+  os: linux
+  arch: amd64
+
+pool:
+  use: ubuntu
 
 steps:
-- name: build
-  image: golang
-  commands:
-  - go test ./...
-  - sh scripts/build.sh
+  - name: build
+    image: golang
+    commands:
+      - sh scripts/build.sh
 
-- name: publish
-  image: plugins/docker
-  settings:
-    repo: plugins/netlify
-    auto_tag: true
-    auto_tag_suffix: linux-arm
-    dockerfile: docker/Dockerfile.linux.arm
-    username:
-      from_secret: docker_username
-    password:
-      from_secret: docker_password
+  - name: publish
+    image: plugins/docker
+    settings:
+      repo: plugins/netlify
+      auto_tag: true
+      auto_tag_suffix: linux-amd64
+      dockerfile: docker/Dockerfile
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+
+depends_on:
+  - testing
+
+trigger:
+  ref:
+    - refs/heads/master
+    - refs/tags/**
+    - refs/pull/**
 
 ---
 kind: pipeline
@@ -60,43 +85,49 @@ platform:
   arch: arm64
 
 steps:
-- name: build
-  image: golang
-  commands:
-  - go test ./...
-  - sh scripts/build.sh
+  - name: build
+    image: golang
+    commands:
+      - go test ./...
+      - sh scripts/build.sh
 
-- name: publish
-  image: plugins/docker
-  settings:
-    repo: plugins/netlify
-    auto_tag: true
-    auto_tag_suffix: linux-arm64
-    dockerfile: docker/Dockerfile.linux.arm64
-    username:
-      from_secret: docker_username
-    password:
-      from_secret: docker_password
+  - name: publish
+    image: plugins/docker
+    settings:
+      repo: plugins/netlify
+      auto_tag: true
+      auto_tag_suffix: linux-arm64
+      dockerfile: docker/Dockerfile.linux.arm64
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
 
+depends_on:
+  - testing
+  
+trigger:
+  ref:
+    - refs/heads/master
+    - refs/tags/**
+    - refs/pull/**
 ---
 kind: pipeline
 type: docker
 name: manifest
 
 steps:
-- name: manifest
-  image: plugins/manifest
-  settings:
-    spec: docker/manifest.tmpl
-    auto_tag: true
-    ignore_missing: true
-    password:
-      from_secret: docker_password
-    username:
-      from_secret: docker_username
+  - name: manifest
+    image: plugins/manifest
+    settings:
+      spec: docker/manifest.tmpl
+      auto_tag: true
+      ignore_missing: true
+      password:
+        from_secret: docker_password
+      username:
+        from_secret: docker_username
 
 depends_on:
-- arm32
-- arm64
-- amd64
-
+  - arm64
+  - amd64

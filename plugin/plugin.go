@@ -61,7 +61,7 @@ func Exec(ctx context.Context, args Args) error {
 	if args.Path != "" {
 		flags = append(flags, fmt.Sprintf("--dir=%s", args.Path))
 	} else {
-		flags = append(flags, fmt.Sprintf("--dir=./"))
+		flags = append(flags, "--dir=./")
 	}
 
 	cmd = exec.Command("netlify", flags...)
