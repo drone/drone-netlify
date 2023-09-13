@@ -17,11 +17,12 @@ import (
 type Args struct {
 	Pipeline
 
-	Debug bool   `envconfig:"PLUGIN_DEBUG"` // Debug enables Netlify debugging.
-	Path  string `envconfig:"PLUGIN_PATH"`  // Path provides the upload path.
-	Site  string `envconfig:"PLUGIN_SITE"`  // Side provides the Netlify site id.
-	Token string `envconfig:"PLUGIN_TOKEN"` // Token provides the Netlify token.
-	Prod  bool   `envconfig:"PLUGIN_PROD"`  // Prod instructs netlify to deploy to prod.
+	Debug    bool   `envconfig:"PLUGIN_DEBUG"`   // Debug enables Netlify debugging.
+	Context  string `envconfig:"PLUGIN_CONTEXT"` // Prod instructs netlify to deploy to prod.
+	Path     string `envconfig:"PLUGIN_PATH"`    // Path provides the upload path.
+	Site     string `envconfig:"PLUGIN_SITE"`    // Side provides the Netlify site id.
+	Token    string `envconfig:"PLUGIN_TOKEN"`   // Token provides the Netlify token.
+	Prod     bool   `envconfig:"PLUGIN_PROD"`    // Prod instructs netlify to deploy to prod.
 
 	Level string `envconfig:"PLUGIN_LOG_LEVEL"` // Level defines the log level.
 }
@@ -57,6 +58,9 @@ func Exec(ctx context.Context, args Args) error {
 	}
 	if args.Debug {
 		flags = append(flags, "--debug")
+	}
+	if args.Context != "" {
+		flags = append(flags, fmt.Sprintf("--context=%s", args.Context))
 	}
 	if args.Path != "" {
 		flags = append(flags, fmt.Sprintf("--dir=%s", args.Path))
