@@ -10,7 +10,7 @@ pool:
 
 steps:
   - name: test
-    image: golang:1.19
+    image: golang:1.20
     commands:
       - go test -cover ./...
     volumes:
@@ -68,8 +68,11 @@ trigger:
 
 ---
 kind: pipeline
-type: docker
+type: vm
 name: arm64
+
+pool:
+  use: ubuntu_arm64
 
 platform:
   arch: arm64
