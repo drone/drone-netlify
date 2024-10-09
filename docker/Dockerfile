@@ -6,7 +6,7 @@ ENV GODEBUG netdns=go
 
 COPY --from=alpine /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
-RUN npm install netlify-cli -g
+RUN npm install netlify-cli@14.19.1 -g
 
 ADD release/linux/amd64/plugin /bin/
 ENTRYPOINT ["/bin/plugin"]
