@@ -1,7 +1,7 @@
 FROM alpine:3.6 as alpine
 RUN apk add -U --no-cache ca-certificates
 
-FROM node:14-alpine
+FROM node:18-alpine
 ENV GODEBUG netdns=go
 
 COPY --from=alpine /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
